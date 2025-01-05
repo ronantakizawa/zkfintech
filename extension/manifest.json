@@ -11,6 +11,13 @@
     "https://connect.secure.wellsfargo.com/*",
     "http://localhost:3000/*"
   ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  },
+  "web_accessible_resources": [{
+    "resources": ["circuit.wasm", "circuit_final.zkey"],
+    "matches": ["<all_urls>"]
+  }],
   "action": {
     "default_popup": "popup.html"
   }

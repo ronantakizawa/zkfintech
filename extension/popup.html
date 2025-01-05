@@ -1,41 +1,38 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <style>
-    body {
-      width: 300px;
-      padding: 15px;
-      font-family: Arial, sans-serif;
-    }
-    #balance, #verificationStatus {
-      font-weight: bold;
-      margin: 10px 0;
-    }
-    button {
-      width: 100%;
-      padding: 8px;
-      margin: 5px 0;
-      background: #0066cc;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    button:disabled {
-      background: #cccccc;
-    }
-    .error {
-      color: red;
-    }
-    .success {
-      color: green;
-    }
-  </style>
+    <style>
+        body {
+            width: 300px;
+            padding: 15px;
+            font-family: Arial, sans-serif;
+        }
+        #status {
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        button {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            background: #0066cc;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background: #cccccc;
+        }
+    </style>
 </head>
 <body>
-  <div>Current Balance: <span id="balance">Loading...</span></div>
-  <button id="verifyButton">Verify Balance > $1,000</button>
-  <div id="verificationStatus"></div>
-  <script src="popup.js"></script>
+    <div>Balance: <span id="balance">Loading...</span></div>
+    <button id="verifyButton">Verify Balance > $1,000</button>
+    <div id="status"></div>
+
+    <script src="snarkjs.min.js"></script>
+    <script src="init.js"></script>
+    <script src="popup.js"></script>
 </body>
 </html>
