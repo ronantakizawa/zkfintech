@@ -47,13 +47,7 @@ async function getBalanceAndGenerateProof() {
                             }
                         }
                     }
-                    
-                    const balanceElement = document.querySelector('span[data-testid="EVERYDAY CHECKING-balance"]');
-                    if (balanceElement) {
-                        return balanceElement.textContent.trim();
-                    }
-                    
-                    return null;
+                    return null; // If no balance is found in the scripts, return null
                 } catch (e) {
                     console.error("Error in content script:", e);
                     return null;
@@ -61,7 +55,7 @@ async function getBalanceAndGenerateProof() {
             }
         });
 
-        if (!results || !results[0] || !results[0].result === null) {
+        if (!results || !results[0] || results[0].result === null) {
             throw new Error('Could not read balance from response data');
         }
 
