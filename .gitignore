@@ -11,11 +11,7 @@ witness.wtns
 *.ptau
 *.zkey
 verification_key.json
-
-# Keep proof files in extension directory
-!/extension/proof.json
-!/extension/public.json
-!/extension/verification_key.json
+*/extension/
 
 # Development environments
 .idea/

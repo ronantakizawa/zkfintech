@@ -16,38 +16,27 @@ template Num2Bits(n) {
     lc1 === in;
 }
 
-template LessThan(n) {
-    assert(n <= 252);
-    signal input in[2];
-    signal output out;
-
-    component n2b = Num2Bits(n+1);
-
-    n2b.in <== in[0] + (1<<n) - in[1];
-
-    out <== 1-n2b.out[n];
-}
-
 template GreaterEqThan(n) {
     assert(n <= 252);
     signal input in[2];
     signal output out;
 
-    component lt = LessThan(n);
-    lt.in[0] <== in[1];
-    lt.in[1] <== in[0];
-    out <== lt.out;
+    component n2b = Num2Bits(n+1);
+    n2b.in <== in[0] - in[1] + (1<<n);  // Changed order
+    out <== 1-n2b.out[n];
 }
 
 template BalanceCheck() {
-    signal input in[2]; // [balance, threshold]
+    signal input in;
     signal output out;
-
+    
+    var threshold = 100000; // $1000 in cents
+    
     component gte = GreaterEqThan(64);
-    gte.in[0] <== in[0];
-    gte.in[1] <== in[1];
+    gte.in[0] <== in;        // Balance is first input
+    gte.in[1] <== threshold; // Threshold is second input
     
     out <== gte.out;
 }
 
-component main {public [in]} = BalanceCheck();
+component main = BalanceCheck();

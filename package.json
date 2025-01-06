@@ -7,6 +7,11 @@
     "snarkjs": "^0.7.5"
   },
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "build": "node obfuscate.js",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "javascript-obfuscator": "^4.1.1"
   }
 }
