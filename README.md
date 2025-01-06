@@ -1,171 +1,142 @@
-# ZK Balance Verification System
+ZK-TLS Bank Account Balance Verifier
 
-This project demonstrates how to securely verify a Wells Fargo account balance exceeds $1,000 using Zero-Knowledge proofs, implemented through a Chrome extension and verification server.
+A Chrome extension that proves your bank account balance exceeds $1,000 without revealing the actual amount, using Zero-Knowledge Proofs.
+
+## How It Works
+
+### 1. Chrome Extension
+
+The extension implements a three-step process:
+
+#### Balance Extraction
+The extension securely extracts your balance from your account's TLS response data:
+
+```javascript
+const account = data.applicationData.accountSummary.accounts.find(
+    acc => acc.accountProfile?.accountName === "EVERYDAY CHECKING"
+);
+const balance = account?.balance?.[0]?.amount;
+```
+
+#### Zero-Knowledge Proof Generation
+When the balance is loaded, the extension immediately generates a proof that your balance exceeds $1,000 without revealing the actual amount:
+
+```javascript
+const { proof, publicSignals } = await window.snarkjs.groth16.fullProve(
+    { in: balanceInCents.toString() },
+    "circuit.wasm", 
+    "circuit_final.zkey"
+);
+```
+
+#### Proof Verification
+When you click "Verify", the extension sends the pre-generated proof to the verification server:
+
+```javascript
+const response = await fetch('http://localhost:3000/verify', {
+    headers: { 
+        'Content-Type': 'application/json',
+        'X-Request-ID': requestId,
+        'X-Timestamp': timestamp.toString(),
+        'X-Balance-Source': 'EVERYDAY CHECKING-balance'
+    },
+    body: JSON.stringify({ proof, publicSignals })
+});
+```
+
+### 2. Zero-Knowledge Circuit
+
+The circuit implements the balance threshold check:
+
+```circom
+pragma circom 2.1.4;
+
+template BalanceCheck() {
+    signal input in;
+    signal output out;
+    
+    var threshold = 100000; // $1000 in cents
+    
+    component gt = GreaterThan(64);
+    gt.a <== in;
+    gt.b <== threshold;
+    
+    out <== gt.out;
+}
+```
+
+### 3. Verification Server
+
+A Node.js server verifies the proofs:
+
+```javascript
+app.post('/verify', async (req, res) => {
+    const { proof, publicSignals } = req.body;
+    const verified = await snarkjs.groth16.verify(vKey, publicSignals, proof);
+    res.json({ verified });
+});
+```
+
+## Security Features
+
+### Data Security
+- Uses TLS response data
+- Validates data structure and types
+- Immediate proof generation on data load
+
+### Cryptographic Security
+- Zero-knowledge proofs ensure privacy
+- Groth16 proving system
+- Hard-coded threshold in circuit
+- Public signals only show pass/fail
+
+### Request Security
+- Unique request IDs prevent replay attacks
+- Timestamp validation
+- Source validation
+- Request integrity checks
 
 ## Project Structure
 
 ```
 project/
-├── extension/            # Chrome extension
-│   ├── dist/            # Built extension with obfuscated code
-│   ├── manifest.json    # Extension configuration
-│   ├── popup.html      # Extension UI
-│   ├── popup.js        # Extension logic (pre-obfuscation)
-│   ├── init.js         # Snarkjs initialization
-│   ├── snarkjs.min.js  # Snarkjs library
-│   ├── circuit.wasm    # Compiled circuit
-│   ├── circuit_final.zkey # Circuit proving key
-│   ├── obfuscator-config.json # Obfuscation settings
-│   └── obfuscate.js    # Obfuscation script
-│
+├── extension/         # Built extension
+│   ├── manifest.json  # Chrome Extension Congfig File
+│   ├── popup.html     # Chrome Extension Page
+│   ├── popup.js       # Chrome Extension JS files
+│   └── snarkjs.min.js # SnarkJS Library file
+
 ├── server.js           # Verification server
-└── package.json        # Server dependencies
+└── package.json        # Dependencies
 ```
-
-## Prerequisites
-
-- Node.js (v14 or higher)
-- npm
-- Google Chrome browser
-- circom (for circuit compilation)
-- snarkjs
 
 ## Setup Instructions
 
-### Server Setup
-
-1. Install dependencies:
+1. Install Dependencies:
 ```bash
 npm install
 ```
 
-2. Start the server:
+2. Compile Circuit:
+Follow guidelines until step 24 on SnarkJS for how to build a Groth16 zk-SNARK: https://github.com/iden3/snarkjs?tab=readme-ov-file
+
+4. Start Server:
 ```bash
 node server.js
 ```
 
-### Extension Setup
-
-1. Install dependencies:
-```bash
-cd extension
-npm install
-```
-
-2. Build the extension:
-```bash
-npm run build
-```
-
-3. Load the built extension in Chrome:
-- Go to `chrome://extensions/`
-- Enable "Developer mode"
-- Click "Load unpacked"
-- Select the `extension/dist` directory
-
-## Security Features
-
-1. Code Protection:
-- JavaScript obfuscation
-- Self-defending code
-- Debug protection
-- Console output disabled
-- String encryption
-
-2. Proof Generation:
-- Real-time proof generation
-- Tamper-resistant balance reading
-- DOM manipulation detection
-- Source validation
-
-3. Network Security:
-- Request signing
-- Timestamp validation
-- Request ID tracking
-
-4. Server Security:
-- Rate limiting
-- Request verification
-- Error logging
-- CORS protection
-
-## Development
-
-1. Modify source code in extension directory
-2. Build obfuscated version:
-```bash
-cd extension
-npm run build
-```
-
-3. Clean build:
-```bash
-cd extension
-npm run clean
-```
-
-## Obfuscation Configuration
-
-The project uses `javascript-obfuscator` with the following protections:
-- Control flow flattening
-- Dead code injection
-- Debug protection
-- String encryption
-- Code self-defense
-- Identifier obfuscation
-
-Configure obfuscation settings in `extension/obfuscator-config.json`.
-
-## Production Deployment
-
-1. Server:
-- Configure environment variables
-- Enable security headers
-- Set up monitoring
-
-2. Extension:
-- Build with production configuration
-- Test obfuscated code
-- Package for Chrome Web Store
-
-## Security Considerations
-
-1. Code Protection:
-- All source code is obfuscated
-- Debug protection enabled
-- Self-defending code
-- String encryption
-
-2. Balance Validation:
-- DOM structure verification
-- Mutation detection
-- Source validation
-- Format checking
-
-3. Server Security:
-- Request validation
-- Timestamp checking
-- Source verification
-- Rate limiting
+5. Load Extension:
+- Open Chrome Extensions (chrome://extensions)
+- Enable Developer mode
+- Load unpacked extension from `extension` directory
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
-3. Make changes in source directories
-4. Build and test
-5. Submit pull request
+3. Make changes
+4. Submit pull request
 
 ## License
 
 MIT LICENSE
-
-## Security Notice
-
-This is a demonstration project that includes various security features including code obfuscation. For production use:
-1. Implement additional security measures
-2. Conduct security audits
-3. Set up proper monitoring
-4. Use secure key management
-5. Enable detailed logging
-6. Regularly update obfuscation patterns
