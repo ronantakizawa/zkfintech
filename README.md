@@ -1,4 +1,4 @@
-ZK-TLS Bank Account Balance Verifier
+# ZK-TLS Bank Account Balance Verifier
 
 A Chrome extension that proves your bank account balance exceeds $1,000 without revealing the actual amount, using Zero-Knowledge Proofs.
 
@@ -6,7 +6,7 @@ A Chrome extension that proves your bank account balance exceeds $1,000 without 
 
 ### 1. Chrome Extension
 
-The extension implements a three-step process:
+The extension implements a secure three-step process:
 
 #### Balance Extraction
 The extension securely extracts your balance from your account's TLS response data:
@@ -22,20 +22,27 @@ const balance = account?.balance?.[0]?.amount;
 When the balance is loaded, the extension immediately generates a proof that your balance exceeds $1,000 without revealing the actual amount:
 
 ```javascript
-const { proof, publicSignals } = await window.snarkjs.groth16.fullProve(
+const { proof, publicSignals } = await snarkjs.groth16.fullProve(
     { in: balanceInCents.toString() },
     "circuit.wasm", 
     "circuit_final.zkey"
 );
 ```
 
-#### Proof Verification
-When you click "Verify", the extension sends the pre-generated proof to the verification server:
+#### Secure Proof Storage and Verification
+The proof is securely stored and verified using an authenticated session:
 
 ```javascript
+await SecureStorage.setSecureItem('current_proof', {
+    proof,
+    publicSignals
+}, 5); // 5 minutes expiry
+
 const response = await fetch('http://localhost:3000/verify', {
+    method: 'POST',
     headers: { 
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`,
         'X-Request-ID': requestId,
         'X-Timestamp': timestamp.toString(),
         'X-Balance-Source': 'EVERYDAY CHECKING-balance'
@@ -56,21 +63,22 @@ template BalanceCheck() {
     signal output out;
     
     var threshold = 100000; // $1000 in cents
-    
-    component gt = GreaterThan(64);
-    gt.a <== in;
-    gt.b <== threshold;
-    
-    out <== gt.out;
+    component gte = GreaterEqThan(64);
+    gte.in[0] <== in;
+    gte.in[1] <== threshold;
+    out <== gte.out;
 }
 ```
 
-### 3. Verification Server
+### 3. Secure Authentication Server
 
-A Node.js server verifies the proofs:
+A Node.js server implements secure session management and proof verification:
 
 ```javascript
-app.post('/verify', async (req, res) => {
+const sessionToken = crypto.randomBytes(32).toString('hex');
+const JWT_SECRET = crypto.randomBytes(64).toString('hex');
+
+app.post('/verify', authenticateJWT, validateRequest, async (req, res) => {
     const { proof, publicSignals } = req.body;
     const verified = await snarkjs.groth16.verify(vKey, publicSignals, proof);
     res.json({ verified });
@@ -80,33 +88,50 @@ app.post('/verify', async (req, res) => {
 ## Security Features
 
 ### Data Security
-- Uses TLS response data
-- Validates data structure and types
-- Immediate proof generation on data load
+- Secure XOR encryption for stored data
+- Session-based storage with auto-expiry
+- Automatic cleanup on session end
+- Secure proof storage with 5-minute expiry
+
+### Authentication Security
+- JWT-based authentication
+- Session token management
+- Request signing
+- Secure key storage
 
 ### Cryptographic Security
 - Zero-knowledge proofs ensure privacy
 - Groth16 proving system
 - Hard-coded threshold in circuit
 - Public signals only show pass/fail
+- Encrypted storage for sensitive data
 
 ### Request Security
 - Unique request IDs prevent replay attacks
 - Timestamp validation
 - Source validation
 - Request integrity checks
+- Rate limiting
+- Session binding
 
 ## Project Structure
 
 ```
 project/
-├── extension/         # Built extension
-│   ├── manifest.json  # Chrome Extension Congfig File
-│   ├── popup.html     # Chrome Extension Page
-│   ├── popup.js       # Chrome Extension JS files
-│   └── snarkjs.min.js # SnarkJS Library file
-
-├── server.js           # Verification server
+├── extension/
+│   ├── manifest.json     # Extension config
+│   ├── popup.html       # UI components
+│   ├── popup.js        # Core extension logic
+│   └── snarkjs.min.js  # ZK-SNARK library
+│
+├── server/
+│   ├── server.js       # Authentication & verification server
+│   └── auth.js         # Authentication middleware
+│
+├── circuits/
+│   ├── circuit.circom  # ZK circuit definition
+│   └── compile.sh      # Circuit compilation script
+│
 └── package.json        # Dependencies
 ```
 
@@ -118,17 +143,42 @@ npm install
 ```
 
 2. Compile Circuit:
-Follow guidelines until step 24 on SnarkJS for how to build a Groth16 zk-SNARK: https://github.com/iden3/snarkjs?tab=readme-ov-file
+```bash
+cd circuits
+./compile.sh
+```
+
+3. Generate Keys:
+```bash
+node generate-keys.js
+```
 
 4. Start Server:
 ```bash
-node server.js
+node server/server.js
 ```
 
 5. Load Extension:
 - Open Chrome Extensions (chrome://extensions)
 - Enable Developer mode
 - Load unpacked extension from `extension` directory
+
+## Security Recommendations
+
+1. In production:
+- Use hardware security modules for key storage
+- Implement certificate pinning
+- Add additional tampering checks
+- Use more robust encryption
+- Add rate limiting
+- Implement request signing
+
+2. For deployment:
+- Host server on HTTPS
+- Use secure DNS
+- Implement WAF rules
+- Monitor for suspicious activity
+- Regular security audits
 
 ## Contributing
 

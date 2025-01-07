@@ -10,25 +10,54 @@
         #status {
             font-weight: bold;
             margin: 10px 0;
+            padding: 8px;
+            border-radius: 4px;
         }
         button {
             width: 100%;
-            padding: 8px;
+            padding: 10px;
             margin: 5px 0;
             background: #0066cc;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background: #0052a3;
         }
         button:disabled {
             background: #cccccc;
+            cursor: not-allowed;
+        }
+        .success {
+            color: #2e7d32;
+            background-color: #e8f5e9;
+        }
+        .error {
+            color: #c62828;
+            background-color: #ffebee;
+        }
+        .balance-section {
+            margin: 15px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+        #balance {
+            font-weight: bold;
+            color: #0066cc;
         }
     </style>
 </head>
 <body>
-    <div>Balance: <span id="balance">Loading...</span></div>
-    <button id="verifyButton">Verify Balance > $1,000</button>
+    <div class="balance-section">
+        Balance: <span id="balance">Loading...</span>
+    </div>
+    <button id="verifyButton" disabled>Verify Balance > $1,000</button>
     <div id="status"></div>
 
     <script src="snarkjs.min.js"></script>

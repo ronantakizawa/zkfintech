@@ -3,20 +3,21 @@
   "name": "Wells Fargo ZK Balance Verifier",
   "version": "1.0",
   "description": "Verifies balance exceeds threshold using ZK proofs",
-    "permissions": [
-      "activeTab",
-      "scripting",
-      "storage"
-    ],
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "unlimitedStorage"
+  ],
   "host_permissions": [
     "https://connect.secure.wellsfargo.com/*",
     "http://localhost:3000/*"
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; default-src 'self'"
   },
   "web_accessible_resources": [{
-    "resources": ["circuit.wasm", "circuit_final.zkey"],
+    "resources": ["circuit.wasm", "circuit_final.zkey", "snarkjs.min.js"],
     "matches": ["<all_urls>"]
   }],
   "action": {
